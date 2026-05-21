@@ -50,6 +50,15 @@ export const createBrand = async (brandData) => {
   return response.data;
 };
 
+export const updateBrandById = async (id, brandData) => {
+  const response = await api.patch(
+    `/brands/${id}`,
+    brandData,
+    getAdminRequestConfig()
+  );
+  return response.data;
+};
+
 export const reorderBrands = async (orderedIds) => {
   const response = await api.patch(
     "/brands/reorder",
@@ -66,6 +75,15 @@ export const deleteBrandById = async (id) => {
 
 export const createCar = async (carData) => {
   const response = await api.post("/cars", carData, getAdminRequestConfig());
+  return response.data;
+};
+
+export const updateCarById = async (id, carData) => {
+  const response = await api.patch(
+    `/cars/${id}`,
+    carData,
+    getAdminRequestConfig()
+  );
   return response.data;
 };
 
@@ -101,6 +119,15 @@ export const getPartsByCarId = async (id) => {
 export const createPartForCar = async (id, partData) => {
   const response = await api.post(
     `/cars/${id}/parts`,
+    partData,
+    getAdminRequestConfig()
+  );
+  return response.data;
+};
+
+export const updatePartById = async (id, partData) => {
+  const response = await api.patch(
+    `/parts/${id}`,
     partData,
     getAdminRequestConfig()
   );

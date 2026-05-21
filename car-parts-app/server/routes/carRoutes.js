@@ -4,6 +4,7 @@ const {
   getAllCars,
   getCarById,
   createCar,
+  updateCar,
   reorderCars,
   deleteCar,
 } = require("../controllers/carController");
@@ -15,6 +16,7 @@ router.get("/", getAllCars);
 router.patch("/reorder", protectAdmin, reorderCars);
 router.get("/:id", getCarById);
 router.post("/", protectAdmin, createCar);
+router.patch("/:id", protectAdmin, updateCar);
 router.delete("/:id", protectAdmin, deleteCar);
 
 module.exports = router;

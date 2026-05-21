@@ -11,9 +11,11 @@ const MIME_EXTENSION_MAP = {
   "image/webp": "webp",
 };
 
+const normalizeImageValue = (imageValue) =>
+  typeof imageValue === "string" ? imageValue.trim() : "";
+
 const saveUploadedImage = async (imageValue, filePrefix = "image") => {
-  const trimmedImage =
-    typeof imageValue === "string" ? imageValue.trim() : "";
+  const trimmedImage = normalizeImageValue(imageValue);
 
   if (!trimmedImage) {
     return "";
@@ -44,8 +46,7 @@ const saveUploadedImage = async (imageValue, filePrefix = "image") => {
 };
 
 const deleteStoredImage = async (imageValue) => {
-  const trimmedImage =
-    typeof imageValue === "string" ? imageValue.trim() : "";
+  const trimmedImage = normalizeImageValue(imageValue);
 
   if (!trimmedImage.startsWith(`${UPLOADS_ROUTE}/`)) {
     return;
@@ -63,9 +64,36 @@ const deleteStoredImage = async (imageValue) => {
   }
 };
 
+const replaceStoredImage = async (
+  currentImageValue,
+  nextImageValue,
+  filePrefix = "image"
+) => {
+  const currentImage = normalizeImageValue(currentImageValue);
+  const nextImage = normalizeImageValue(nextImageValue);
+
+  if (nextImage === currentImage) {
+    return currentImage;
+  }
+
+  if (!nextImage) {
+    await deleteStoredImage(currentImage);
+    return "";
+  }
+
+  const storedImage = await saveUploadedImage(nextImage, filePrefix);
+
+  if (currentImage && currentImage !== storedImage) {
+    await deleteStoredImage(currentImage);
+  }
+
+  return storedImage;
+};
+
 module.exports = {
   UPLOADS_DIR,
   UPLOADS_ROUTE,
   deleteStoredImage,
+  replaceStoredImage,
   saveUploadedImage,
 };

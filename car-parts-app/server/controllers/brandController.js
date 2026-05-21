@@ -10,6 +10,7 @@ const {
 } = require("../utils/ordering");
 const {
   deleteStoredImage,
+  replaceStoredImage,
   saveUploadedImage,
 } = require("../utils/imageStorage");
 
@@ -121,6 +122,53 @@ const createBrand = async (req, res) => {
   }
 };
 
+const updateBrand = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, image, description } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid brand ID." });
+    }
+
+    const brand = await Brand.findById(id);
+
+    if (!brand) {
+      return res.status(404).json({ message: "Brand not found." });
+    }
+
+    const trimmedName = name?.trim();
+    const existingBrand = await Brand.findOne({
+      _id: { $ne: id },
+      name: { $regex: `^${escapeRegex(trimmedName)}$`, $options: "i" },
+    });
+
+    if (existingBrand) {
+      return res.status(400).json({ message: "This brand already exists." });
+    }
+
+    const previousName = brand.name;
+
+    brand.name = trimmedName;
+    brand.description = description;
+    brand.image = await replaceStoredImage(brand.image, image, "brand");
+
+    await brand.save();
+
+    if (previousName !== brand.name) {
+      await Car.updateMany({ brandId: brand._id }, { brand: brand.name });
+    }
+
+    res.status(200).json(brand);
+  } catch (error) {
+    if (error.name === "ValidationError") {
+      return res.status(400).json({ message: error.message });
+    }
+
+    res.status(500).json({ message: "Failed to update brand." });
+  }
+};
+
 const reorderBrands = async (req, res) => {
   try {
     await ensureSortOrder(Brand, {}, brandFallbackSort);
@@ -177,6 +225,7 @@ module.exports = {
   getBrandById,
   getCarsByBrandId,
   createBrand,
+  updateBrand,
   reorderBrands,
   deleteBrand,
 };

@@ -5,6 +5,7 @@ const {
   getBrandById,
   getCarsByBrandId,
   createBrand,
+  updateBrand,
   reorderBrands,
   deleteBrand,
 } = require("../controllers/brandController");
@@ -17,6 +18,7 @@ router.patch("/reorder", protectAdmin, reorderBrands);
 router.get("/:id/cars", getCarsByBrandId);
 router.get("/:id", getBrandById);
 router.post("/", protectAdmin, createBrand);
+router.patch("/:id", protectAdmin, updateBrand);
 router.delete("/:id", protectAdmin, deleteBrand);
 
 module.exports = router;

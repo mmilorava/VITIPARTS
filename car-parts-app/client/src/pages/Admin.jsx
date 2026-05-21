@@ -22,6 +22,9 @@ import {
   reorderBrands,
   reorderCars,
   reorderPartsForCar,
+  updateBrandById,
+  updateCarById,
+  updatePartById,
 } from "../services/api";
 import {
   translateCategory,
@@ -141,6 +144,9 @@ function Admin() {
   const [brandForm, setBrandForm] = useState(initialBrandForm);
   const [carForm, setCarForm] = useState(initialCarForm);
   const [partForm, setPartForm] = useState(initialPartForm);
+  const [editingBrandId, setEditingBrandId] = useState("");
+  const [editingCarId, setEditingCarId] = useState("");
+  const [editingPartId, setEditingPartId] = useState("");
   const [loginForm, setLoginForm] = useState(initialLoginForm);
   const [brandsLoading, setBrandsLoading] = useState(false);
   const [carsLoading, setCarsLoading] = useState(false);
@@ -177,14 +183,34 @@ function Admin() {
     }, {});
   }, [cars]);
 
+  const resetBrandForm = () => {
+    setBrandForm(initialBrandForm);
+    setEditingBrandId("");
+  };
+
+  const resetCarForm = () => {
+    setCarForm((currentForm) => ({
+      ...initialCarForm,
+      brandId: currentForm.brandId || brands[0]?._id || "",
+    }));
+    setEditingCarId("");
+  };
+
+  const resetPartForm = () => {
+    setPartForm(initialPartForm);
+    setEditingPartId("");
+  };
+
   const resetAdminState = () => {
     setBrands([]);
     setCars([]);
     setParts([]);
     setSelectedCarId("");
-    setBrandForm(initialBrandForm);
+    resetBrandForm();
     setCarForm(initialCarForm);
+    setEditingCarId("");
     setPartForm(initialPartForm);
+    setEditingPartId("");
     setPageError("");
     setNotice("");
     setReorderingBrands(false);
@@ -339,6 +365,7 @@ function Admin() {
       return;
     }
 
+    resetPartForm();
     loadParts(selectedCarId);
   }, [isAuthenticated, selectedCarId]);
 
@@ -426,6 +453,64 @@ function Admin() {
   const clearBrandImage = () => clearSelectedImage(setBrandForm);
   const clearCarImage = () => clearSelectedImage(setCarForm);
   const clearPartImage = () => clearSelectedImage(setPartForm);
+
+  const handleEditBrand = (brand) => {
+    setEditingBrandId(brand._id);
+    setBrandForm({
+      name: brand.name || "",
+      image: brand.image || "",
+      description: brand.description || "",
+    });
+    setPageError("");
+    setNotice("");
+  };
+
+  const handleEditCar = (car) => {
+    setEditingCarId(car._id);
+    setCarForm({
+      brandId: car.brandId || "",
+      model: car.model || "",
+      year: car.year || "",
+      image: car.image || "",
+      description: car.description || "",
+    });
+    setSelectedCarId(car._id);
+    setPageError("");
+    setNotice("");
+  };
+
+  const handleEditPart = (part) => {
+    setEditingPartId(part._id);
+    setPartForm({
+      name: part.name || "",
+      code: part.code || "",
+      price: part.price != null ? String(part.price) : "",
+      category: part.category || initialPartForm.category,
+      condition: part.condition || initialPartForm.condition,
+      image: part.image || "",
+      description: part.description || "",
+    });
+    setPageError("");
+    setNotice("");
+  };
+
+  const handleCancelBrandEdit = () => {
+    resetBrandForm();
+    setPageError("");
+    setNotice("");
+  };
+
+  const handleCancelCarEdit = () => {
+    resetCarForm();
+    setPageError("");
+    setNotice("");
+  };
+
+  const handleCancelPartEdit = () => {
+    resetPartForm();
+    setPageError("");
+    setNotice("");
+  };
 
   const resetDragState = () => {
     setDragState({
@@ -621,14 +706,28 @@ function Admin() {
       setPageError("");
       setNotice("");
 
-      const createdBrand = await createBrand(brandForm);
+      if (editingBrandId) {
+        const updatedBrand = await updateBrandById(editingBrandId, brandForm);
 
-      setBrandForm(initialBrandForm);
-      setNotice(`ბრენდი "${createdBrand.name}" წარმატებით დაემატა.`);
-      await loadBrands(createdBrand._id);
-      await loadCars();
+        resetBrandForm();
+        setNotice(`ბრენდი "${updatedBrand.name}" განახლდა.`);
+        await loadBrands(updatedBrand._id);
+        await loadCars(selectedCarId);
+      } else {
+        const createdBrand = await createBrand(brandForm);
+
+        resetBrandForm();
+        setNotice(`ბრენდი "${createdBrand.name}" წარმატებით დაემატა.`);
+        await loadBrands(createdBrand._id);
+        await loadCars();
+      }
     } catch (error) {
-      handleProtectedError(error, "ბრენდის დამატება ვერ მოხერხდა.");
+      handleProtectedError(
+        error,
+        editingBrandId
+          ? "ბრენდის განახლება ვერ მოხერხდა."
+          : "ბრენდის დამატება ვერ მოხერხდა."
+      );
     } finally {
       setSubmittingBrand(false);
     }
@@ -642,16 +741,30 @@ function Admin() {
       setPageError("");
       setNotice("");
 
-      const createdCar = await createCar(carForm);
+      if (editingCarId) {
+        const updatedCar = await updateCarById(editingCarId, carForm);
 
-      setCarForm((currentForm) => ({
-        ...initialCarForm,
-        brandId: currentForm.brandId,
-      }));
-      setNotice(`მანქანა "${createdCar.brand} ${createdCar.model}" დაემატა.`);
-      await loadCars(createdCar._id);
+        resetCarForm();
+        setNotice(`მანქანა "${updatedCar.brand} ${updatedCar.model}" განახლდა.`);
+        await loadCars(updatedCar._id);
+      } else {
+        const createdCar = await createCar(carForm);
+
+        resetCarForm();
+        setCarForm((currentForm) => ({
+          ...currentForm,
+          brandId: createdCar.brandId || carForm.brandId,
+        }));
+        setNotice(`მანქანა "${createdCar.brand} ${createdCar.model}" დაემატა.`);
+        await loadCars(createdCar._id);
+      }
     } catch (error) {
-      handleProtectedError(error, "მანქანის დამატება ვერ მოხერხდა.");
+      handleProtectedError(
+        error,
+        editingCarId
+          ? "მანქანის განახლება ვერ მოხერხდა."
+          : "მანქანის დამატება ვერ მოხერხდა."
+      );
     } finally {
       setSubmittingCar(false);
     }
@@ -671,6 +784,11 @@ function Admin() {
       setNotice("");
 
       await deleteBrandById(brand._id);
+
+      if (editingBrandId === brand._id) {
+        resetBrandForm();
+      }
+
       setNotice(`ბრენდი "${brand.name}" წაიშალა.`);
       await loadBrands();
       await loadCars();
@@ -693,6 +811,11 @@ function Admin() {
       setNotice("");
 
       await deleteCarById(car._id);
+
+      if (editingCarId === car._id) {
+        resetCarForm();
+      }
+
       setNotice(`მანქანა "${car.brand} ${car.model}" წაიშალა.`);
       await loadCars(car._id === selectedCarId ? "" : selectedCarId);
     } catch (error) {
@@ -712,16 +835,29 @@ function Admin() {
       setPageError("");
       setNotice("");
 
-      await createPartForCar(selectedCarId, {
+      const formattedPartForm = {
         ...partForm,
         price: Number(partForm.price),
-      });
+      };
 
-      setPartForm(initialPartForm);
-      setNotice("ნაწილი წარმატებით დაემატა არჩეულ მანქანას.");
+      if (editingPartId) {
+        await updatePartById(editingPartId, formattedPartForm);
+        resetPartForm();
+        setNotice("ნაწილი განახლდა.");
+      } else {
+        await createPartForCar(selectedCarId, formattedPartForm);
+        resetPartForm();
+        setNotice("ნაწილი წარმატებით დაემატა არჩეულ მანქანას.");
+      }
+
       await loadParts(selectedCarId);
     } catch (error) {
-      handleProtectedError(error, "ნაწილის დამატება ვერ მოხერხდა.");
+      handleProtectedError(
+        error,
+        editingPartId
+          ? "ნაწილის განახლება ვერ მოხერხდა."
+          : "ნაწილის დამატება ვერ მოხერხდა."
+      );
     } finally {
       setSubmittingPart(false);
     }
@@ -741,6 +877,11 @@ function Admin() {
       setNotice("");
 
       await deletePartById(part._id);
+
+      if (editingPartId === part._id) {
+        resetPartForm();
+      }
+
       setNotice(`ნაწილი "${part.name}" წაიშალა.`);
       await loadParts(selectedCarId);
     } catch (error) {
@@ -901,13 +1042,31 @@ function Admin() {
                 />
               </label>
 
-              <button
-                className="admin-button"
-                type="submit"
-                disabled={submittingBrand}
-              >
-                {submittingBrand ? "ბრენდი ემატება..." : "ბრენდის დამატება"}
-              </button>
+              <div className="admin-form-actions admin-field-full">
+                <button
+                  className="admin-button"
+                  type="submit"
+                  disabled={submittingBrand}
+                >
+                  {submittingBrand
+                    ? editingBrandId
+                      ? "ბრენდი ახლდება..."
+                      : "ბრენდი ემატება..."
+                    : editingBrandId
+                      ? "ბრენდის შენახვა"
+                      : "ბრენდის დამატება"}
+                </button>
+                {editingBrandId ? (
+                  <button
+                    type="button"
+                    className="admin-button admin-button-secondary"
+                    onClick={handleCancelBrandEdit}
+                    disabled={submittingBrand}
+                  >
+                    გაუქმება
+                  </button>
+                ) : null}
+              </div>
             </form>
           </section>
 
@@ -961,6 +1120,14 @@ function Admin() {
                       </div>
 
                       <div className="admin-car-actions">
+                        <button
+                          type="button"
+                          className="admin-button admin-button-secondary"
+                          onClick={() => handleEditBrand(brand)}
+                          disabled={reorderingBrands}
+                        >
+                          რედაქტირება
+                        </button>
                         <button
                           type="button"
                           className="admin-button admin-button-danger"
@@ -1050,13 +1217,31 @@ function Admin() {
                   />
                 </label>
 
-                <button
-                  className="admin-button"
-                  type="submit"
-                  disabled={submittingCar}
-                >
-                  {submittingCar ? "მანქანა ემატება..." : "მანქანის დამატება"}
-                </button>
+                <div className="admin-form-actions admin-field-full">
+                  <button
+                    className="admin-button"
+                    type="submit"
+                    disabled={submittingCar}
+                  >
+                    {submittingCar
+                      ? editingCarId
+                        ? "მანქანა ახლდება..."
+                        : "მანქანა ემატება..."
+                      : editingCarId
+                        ? "მანქანის შენახვა"
+                        : "მანქანის დამატება"}
+                  </button>
+                  {editingCarId ? (
+                    <button
+                      type="button"
+                      className="admin-button admin-button-secondary"
+                      onClick={handleCancelCarEdit}
+                      disabled={submittingCar}
+                    >
+                      გაუქმება
+                    </button>
+                  ) : null}
+                </div>
               </form>
             ) : (
               <div className="admin-empty">
@@ -1117,6 +1302,14 @@ function Admin() {
                           disabled={reorderingCars}
                         >
                           ნაწილების მართვა
+                        </button>
+                        <button
+                          type="button"
+                          className="admin-button admin-button-secondary"
+                          onClick={() => handleEditCar(car)}
+                          disabled={reorderingCars}
+                        >
+                          რედაქტირება
                         </button>
                         <button
                           type="button"
@@ -1262,13 +1455,31 @@ function Admin() {
                       />
                     </label>
 
-                    <button
-                      className="admin-button"
-                      type="submit"
-                      disabled={submittingPart}
-                    >
-                      {submittingPart ? "ნაწილი ემატება..." : "ნაწილის დამატება"}
-                    </button>
+                    <div className="admin-form-actions admin-field-full">
+                      <button
+                        className="admin-button"
+                        type="submit"
+                        disabled={submittingPart}
+                      >
+                        {submittingPart
+                          ? editingPartId
+                            ? "ნაწილი ახლდება..."
+                            : "ნაწილი ემატება..."
+                          : editingPartId
+                            ? "ნაწილის შენახვა"
+                            : "ნაწილის დამატება"}
+                      </button>
+                      {editingPartId ? (
+                        <button
+                          type="button"
+                          className="admin-button admin-button-secondary"
+                          onClick={handleCancelPartEdit}
+                          disabled={submittingPart}
+                        >
+                          გაუქმება
+                        </button>
+                      ) : null}
+                    </div>
                   </form>
                 </section>
 
@@ -1314,14 +1525,24 @@ function Admin() {
                             </p>
                           </div>
 
-                          <button
-                            type="button"
-                            className="admin-button admin-button-danger"
-                            onClick={() => handleDeletePart(part)}
-                            disabled={reorderingParts}
-                          >
-                            წაშლა
-                          </button>
+                          <div className="admin-car-actions">
+                            <button
+                              type="button"
+                              className="admin-button admin-button-secondary"
+                              onClick={() => handleEditPart(part)}
+                              disabled={reorderingParts}
+                            >
+                              რედაქტირება
+                            </button>
+                            <button
+                              type="button"
+                              className="admin-button admin-button-danger"
+                              onClick={() => handleDeletePart(part)}
+                              disabled={reorderingParts}
+                            >
+                              წაშლა
+                            </button>
+                          </div>
                         </article>
                       ))}
                     </div>
