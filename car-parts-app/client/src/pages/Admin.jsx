@@ -1520,8 +1520,8 @@ function Admin() {
                             <h4>{part.name}</h4>
                             <p>
                               {translateCategory(part.category)} |{" "}
-                              {translateCondition(part.condition)} | $
-                              {Number(part.price || 0).toLocaleString("ka-GE")}
+                              {translateCondition(part.condition)} |{" "}
+                              {Number(part.price || 0).toLocaleString("ka-GE")} ლ
                             </p>
                           </div>
 

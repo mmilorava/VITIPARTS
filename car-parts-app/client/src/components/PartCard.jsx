@@ -7,7 +7,7 @@ import { resolveImageUrl } from "../services/images";
 
 function formatPrice(price) {
   const safePrice = Number(price) || 0;
-  return `$${safePrice.toLocaleString("ka-GE")}`;
+  return `${safePrice.toLocaleString("ka-GE")} ლ`;
 }
 
 function PartCard({ part }) {
