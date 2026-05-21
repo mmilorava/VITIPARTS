@@ -104,7 +104,7 @@ function BrandPage() {
           <>
             <section className="car-detail-shell">
               <div className="car-banner">
-                <div className="car-banner-image">
+                <div className="car-banner-image is-generic">
                   <img src={DETAIL_BANNER_IMAGE} alt="VITIPARTS banner" />
                 </div>
 
