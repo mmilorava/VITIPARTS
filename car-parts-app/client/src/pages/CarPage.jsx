@@ -8,8 +8,8 @@ import {
   getCarById,
   getPartsByCarId,
 } from "../services/api";
-import { resolveImageUrl } from "../services/images";
-import { getBannerPlaceholder } from "../services/placeholders";
+
+const DETAIL_BANNER_IMAGE = "/home-banner.png";
 
 function CarPage() {
   const { id } = useParams();
@@ -66,11 +66,6 @@ function CarPage() {
       isMounted = false;
     };
   }, [id]);
-
-  const resolvedCarImage = resolveImageUrl(car?.image);
-  const bannerImage = resolvedCarImage
-    ? resolvedCarImage
-    : getBannerPlaceholder(car ? `${car.brand} ${car.model}` : "CAR DETAILS");
 
   const categories = useMemo(() => {
     const uniqueCategories = new Set(
@@ -129,7 +124,7 @@ function CarPage() {
             <section className="car-detail-shell">
               <div className="car-banner">
                 <div className="car-banner-image">
-                  <img src={bannerImage} alt={`${car.brand} ${car.model}`} />
+                  <img src={DETAIL_BANNER_IMAGE} alt="VITIPARTS banner" />
                 </div>
 
                 <div className="car-info">

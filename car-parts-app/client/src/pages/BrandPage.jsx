@@ -7,11 +7,8 @@ import {
   getBrandById,
   getCarsByBrandId,
 } from "../services/api";
-import { resolveImageUrl } from "../services/images";
-import {
-  getBannerPlaceholder,
-  getBrandPlaceholder,
-} from "../services/placeholders";
+
+const DETAIL_BANNER_IMAGE = "/home-banner.png";
 
 function BrandPage() {
   const { id } = useParams();
@@ -82,13 +79,6 @@ function BrandPage() {
     });
   }, [cars, normalizedSearch]);
 
-  const resolvedBrandImage = resolveImageUrl(brand?.image);
-  const bannerImage = resolvedBrandImage
-    ? resolvedBrandImage
-    : brand
-      ? getBrandPlaceholder(brand.name)
-      : getBannerPlaceholder("BRAND");
-
   return (
     <section className="page-section">
       <div className="container">
@@ -115,7 +105,7 @@ function BrandPage() {
             <section className="car-detail-shell">
               <div className="car-banner">
                 <div className="car-banner-image">
-                  <img src={bannerImage} alt={brand.name} />
+                  <img src={DETAIL_BANNER_IMAGE} alt="VITIPARTS banner" />
                 </div>
 
                 <div className="car-info">
